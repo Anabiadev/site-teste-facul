@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Painel de pendências – Assistência e Desenvolvimento Social</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ========== MENU LATERAL ========== -->
+  <aside class="lateral">
+    <div class="marca">
+      <strong>Painel da Secretaria</strong>
+      <span>Assistência e Desenvolvimento Social</span>
+    </div>
+    <nav class="menu" aria-label="Seções do sistema">
+      <button type="button" class="menu-item ativo" data-aba="painel">Painel</button>
+      <button type="button" class="menu-item" data-aba="oficios">Ofícios e demandas</button>
+      <button type="button" class="menu-item" data-aba="funcionarios">Funcionários</button>
+      <button type="button" class="menu-item" data-aba="backup">Backup</button>
+    </nav>
+  </aside>
+
+  <main class="conteudo">
+
+    <!-- Avisos (modo de teste e lembrete de backup) são escritos aqui pelo JavaScript -->
+    <div id="avisos"></div>
+
+    <!-- ========== ABA: PAINEL ========== -->
+    <section id="aba-painel" class="aba">
+      <header class="cabecalho-aba">
+        <h1>Painel de pendências</h1>
+        <p>Hoje é <strong id="data-hoje"></strong>. <span id="resumo-painel"></span></p>
+      </header>
+
+      <div class="quadro">
+        <section class="coluna coluna-atraso" aria-labelledby="titulo-atrasados">
+          <h2 id="titulo-atrasados">Atrasados <span class="contagem" id="contagem-atrasados">0</span></h2>
+          <ul class="lista-pendencias" id="lista-atrasados"></ul>
+        </section>
+
+        <section class="coluna coluna-breve" aria-labelledby="titulo-breves">
+          <h2 id="titulo-breves">Vencem em 7 dias <span class="contagem" id="contagem-breves">0</span></h2>
+          <ul class="lista-pendencias" id="lista-breves"></ul>
+        </section>
+
+        <section class="coluna coluna-externo" aria-labelledby="titulo-externos">
+          <h2 id="titulo-externos">Aguardando resposta externa <span class="contagem" id="contagem-externos">0</span></h2>
+          <ul class="lista-pendencias" id="lista-externos"></ul>
+        </section>
+      </div>
+    </section>
+
+    <!-- ========== ABA: OFÍCIOS E DEMANDAS ========== -->
+    <section id="aba-oficios" class="aba" hidden>
+      <header class="cabecalho-aba">
+        <h1>Ofícios e demandas</h1>
+        <p>Registre o que entra e sai da secretaria e acompanhe os prazos.</p>
+      </header>
+
+      <form id="form-oficio" class="cartao" autocomplete="off">
+        <h2 id="titulo-form-oficio">Nova demanda</h2>
+        <input type="hidden" id="of-id">
+
+        <div class="campos">
+          <div class="campo">
+            <label for="of-numero">Número do ofício</label>
+            <input type="text" id="of-numero" required placeholder="Ex.: 015/2026">
+          </div>
+          <div class="campo">
+            <label for="of-data">Data</label>
+            <input type="date" id="of-data" required>
+          </div>
+          <div class="campo">
+            <label for="of-tipo">Tipo</label>
+            <select id="of-tipo"></select>
+          </div>
+          <div class="campo">
+            <label for="of-origem">Origem ou destino</label>
+            <input type="text" id="of-origem" required placeholder="Ex.: Setor de Compras">
+          </div>
+          <div class="campo campo-largo">
+            <label for="of-assunto">Assunto</label>
+            <input type="text" id="of-assunto" required placeholder="Resumo em uma linha">
+          </div>
+          <div class="campo">
+            <label for="of-setor">Setor responsável</label>
+            <select id="of-setor"></select>
+          </div>
+          <div class="campo">
+            <label for="of-prazo">Prazo</label>
+            <input type="date" id="of-prazo">
+          </div>
+          <div class="campo">
+            <label for="of-status">Situação</label>
+            <select id="of-status"></select>
+          </div>
+        </div>
+
+        <div class="campo-marcar">
+          <input type="checkbox" id="of-externo">
+          <label for="of-externo">Aguarda resposta de um órgão externo (ex.: Tribunal de Justiça)</label>
+        </div>
+
+        <!-- Só aparece quando a caixa acima está marcada (o JavaScript controla o atributo "hidden") -->
+        <div class="campos" id="campos-externos" hidden>
+          <div class="campo">
+            <label for="of-orgao">Órgão externo</label>
+            <input type="text" id="of-orgao" placeholder="Ex.: Tribunal de Justiça">
+          </div>
+          <div class="campo">
+            <label for="of-envio">Data de envio</label>
+            <input type="date" id="of-envio">
+          </div>
+        </div>
+
+        <div class="botoes">
+          <button type="submit" class="btn" id="btn-salvar-oficio">Salvar demanda</button>
+          <button type="button" class="btn btn-secundario" id="btn-cancelar-oficio" hidden>Cancelar edição</button>
+        </div>
+      </form>
+
+      <div class="filtros">
+        <div class="campo">
+          <label for="filtro-of-busca">Buscar</label>
+          <input type="search" id="filtro-of-busca" placeholder="Número ou assunto">
+        </div>
+        <div class="campo">
+          <label for="filtro-of-setor">Setor</label>
+          <select id="filtro-of-setor"></select>
+        </div>
+        <div class="campo">
+          <label for="filtro-of-status">Situação</label>
+          <select id="filtro-of-status"></select>
+        </div>
+        <div class="campo-marcar">
+          <input type="checkbox" id="filtro-of-externo">
+          <label for="filtro-of-externo">Só aguardando resposta externa</label>
+        </div>
+      </div>
+
+      <p class="contagem-tabela" id="contagem-oficios"></p>
+      <div class="tabela-rolagem">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Ofício</th>
+              <th scope="col">Assunto</th>
+              <th scope="col">Setor</th>
+              <th scope="col">Prazo</th>
+              <th scope="col">Situação</th>
+              <th scope="col">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="corpo-oficios"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ========== ABA: FUNCIONÁRIOS ========== -->
+    <section id="aba-funcionarios" class="aba" hidden>
+      <header class="cabecalho-aba">
+        <h1>Funcionários</h1>
+        <p>Cadastro interno de contato e função. Registre só o necessário.</p>
+      </header>
+
+      <form id="form-funcionario" class="cartao" autocomplete="off">
+        <h2 id="titulo-form-func">Novo funcionário</h2>
+        <input type="hidden" id="func-id">
+
+        <div class="campos">
+          <div class="campo">
+            <label for="func-nome">Nome</label>
+            <input type="text" id="func-nome" required>
+          </div>
+          <div class="campo">
+            <label for="func-setor">Setor</label>
+            <select id="func-setor"></select>
+          </div>
+          <div class="campo">
+            <label for="func-cargo">Cargo ou função</label>
+            <input type="text" id="func-cargo">
+          </div>
+          <div class="campo">
+            <label for="func-contato">Telefone ou ramal</label>
+            <input type="text" id="func-contato">
+          </div>
+          <div class="campo campo-largo">
+            <label for="func-obs">Observações</label>
+            <textarea id="func-obs" rows="2"></textarea>
+          </div>
+        </div>
+
+        <p class="dica">Não registre CPF, endereço, dados de saúde nem informações do CadÚnico ou do Bolsa Família. Esses dados ficam nos sistemas oficiais.</p>
+
+        <div class="botoes">
+          <button type="submit" class="btn" id="btn-salvar-func">Salvar funcionário</button>
+          <button type="button" class="btn btn-secundario" id="btn-cancelar-func" hidden>Cancelar edição</button>
+        </div>
+      </form>
+
+      <div class="filtros">
+        <div class="campo">
+          <label for="filtro-func-busca">Buscar</label>
+          <input type="search" id="filtro-func-busca" placeholder="Nome, cargo ou setor">
+        </div>
+        <div class="campo">
+          <label for="filtro-func-setor">Setor</label>
+          <select id="filtro-func-setor"></select>
+        </div>
+      </div>
+
+      <p class="contagem-tabela" id="contagem-funcionarios"></p>
+      <div class="tabela-rolagem">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Nome</th>
+              <th scope="col">Setor</th>
+              <th scope="col">Cargo</th>
+              <th scope="col">Contato</th>
+              <th scope="col">Observações</th>
+              <th scope="col">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="corpo-funcionarios"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ========== ABA: BACKUP ========== -->
+    <section id="aba-backup" class="aba" hidden>
+      <header class="cabecalho-aba">
+        <h1>Backup e importação</h1>
+        <p>Os dados ficam guardados no navegador deste computador. Se alguém limpar os dados de navegação ou trocar de computador, eles somem. Por isso, faça um backup toda semana e guarde os arquivos no Google Drive.</p>
+      </header>
+
+      <div class="cartao">
+        <h2>Fazer backup</h2>
+        <p><strong id="texto-backup"></strong></p>
+        <p id="resumo-backup"></p>
+        <div class="botoes">
+          <button type="button" class="btn" id="btn-backup">Fazer backup agora</button>
+        </div>
+        <p class="dica">Baixa dois arquivos CSV (funcionários e ofícios) que também abrem no Excel. Se o navegador perguntar, permita baixar vários arquivos.</p>
+      </div>
+
+      <div class="cartao">
+        <h2>Importar CSV</h2>
+        <p class="dica">Os registros importados são adicionados aos que já existem, e repetidos são ignorados. Datas podem estar no formato 31/12/2026. Use arquivos gerados pelo backup ou planilhas com os mesmos cabeçalhos.</p>
+        <div class="campos">
+          <div class="campo">
+            <label for="importar-funcionarios">Importar funcionários</label>
+            <input type="file" id="importar-funcionarios" accept=".csv,text/csv">
+          </div>
+          <div class="campo">
+            <label for="importar-oficios">Importar ofícios e demandas</label>
+            <input type="file" id="importar-oficios" accept=".csv,text/csv">
+          </div>
+        </div>
+      </div>
+
+      <div class="cartao cartao-cuidado">
+        <h2>Cuidado</h2>
+        <p>Estas ações substituem ou apagam os dados que estão no sistema. Faça um backup antes.</p>
+        <div class="botoes">
+          <button type="button" class="btn btn-secundario" id="btn-exemplos">Carregar dados fictícios</button>
+          <button type="button" class="btn btn-perigo" id="btn-apagar-tudo">Apagar todos os dados</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Mensagem curta de confirmação ("Funcionário salvo.") que aparece e some sozinha -->
+<div id="mensagem" class="mensagem" role="status" aria-live="polite"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
